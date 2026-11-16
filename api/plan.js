@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     }
 
     // 환경변수 확인
-    if (!process.env.Gemini API Key 1) {
+    if (!process.env.Gemini API Key) {
         return res.status(500).json({ error: 'Gemini API 키가 설정되지 않았습니다.' });
     }
 
