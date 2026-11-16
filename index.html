@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 여행 플래너</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* 로딩 스피너 애니메이션 */
+        .loader {
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen pb-10">
+
+    <!-- 모바일 화면 비율에 맞춘 컨테이너 -->
+    <main class="max-w-md mx-auto bg-white min-h-screen shadow-lg sm:rounded-2xl sm:min-h-[auto] sm:mt-10 sm:overflow-hidden relative">
+        
+        <!-- 헤더 영역 -->
+        <header class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-b-3xl sm:rounded-t-2xl sm:rounded-b-none">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i class="ph ph-airplane-tilt text-3xl"></i>
+                AI 맞춤 여행 플래너
+            </h1>
+            <p class="text-blue-100 text-sm mt-2 opacity-90">당신만의 완벽한 여행 일정을 1분 만에 만들어보세요.</p>
+        </header>
+
+        <div class="p-6">
+            <!-- 입력 폼 -->
+            <form id="travelForm" class="space-y-5">
+                <!-- 여행지 -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1" for="destination">어디로 떠나시나요?</label>
+                    <div class="relative">
+                        <i class="ph ph-map-pin absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                        <input type="text" id="destination" required placeholder="예: 오사카, 제주도, 파리" 
+                            class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
+                    </div>
+                </div>
+
+                <!-- 기간 -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1" for="duration">며칠 동안 머무르시나요?</label>
+                    <div class="relative">
+                        <i class="ph ph-calendar-blank absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                        <div class="flex items-center">
+                            <input type="number" id="duration" required min="1" max="30" placeholder="3" 
+                                class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
+                            <span class="absolute right-4 text-gray-500">일</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 누구와 -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1" for="companions">누구와 함께 가나요?</label>
+                    <div class="relative">
+                        <i class="ph ph-users absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg z-10"></i>
+                        <select id="companions" required 
+                            class="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors">
+                            <option value="" disabled selected>선택해주세요</option>
+                            <option value="혼자">혼자서 여유롭게</option>
+                            <option value="친구">친구들과 신나게</option>
+                            <option value="연인">연인과 로맨틱하게</option>
+                            <option value="가족">가족과 단란하게</option>
+                            <option value="기타">기타</option>
+                        </select>
+                        <i class="ph ph-caret-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <!-- 관심사 -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1" for="interests">여행에서 가장 기대하는 것은?</label>
+                    <div class="relative">
+                        <i class="ph ph-sparkle absolute left-3 top-3 text-gray-400 text-lg"></i>
+                        <textarea id="interests" rows="2" placeholder="예: 현지 맛집 탐방, 사진 찍기 좋은 예쁜 카페, 휴양, 액티비티" 
+                            class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors resize-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- 제출 버튼 -->
+                <button type="submit" id="submitBtn" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-md transition-all active:scale-[0.98] flex justify-center items-center gap-2">
+                    <span id="btnText">일정 생성하기</span>
+                    <div id="btnLoader" class="loader hidden"></div>
+                </button>
+            </form>
+
+            <!-- 결과 표시 영역 (초기엔 숨김) -->
+            <div id="resultContainer" class="mt-8 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">추천 여행 일정</h2>
+                    <button id="resetBtn" class="text-sm text-gray-500 hover:text-gray-800 underline decoration-gray-300 underline-offset-4 transition-colors">다시 짜기</button>
+                </div>
+                
+                <!-- 일자별 카드가 렌더링될 곳 -->
+                <div id="planCards" class="space-y-4"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const form = document.getElementById('travelForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnLoader = document.getElementById('btnLoader');
+        const resultContainer = document.getElementById('resultContainer');
+        const planCards = document.getElementById('planCards');
+        const resetBtn = document.getElementById('resetBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // 폼 데이터 수집
+            const formData = {
+                destination: document.getElementById('destination').value,
+                duration: parseInt(document.getElementById('duration').value),
+                companions: document.getElementById('companions').value,
+                interests: document.getElementById('interests').value
+            };
+
+            // UI 상태 변경 (로딩 중)
+            setLoadingState(true);
+            resultContainer.classList.add('hidden');
+            planCards.innerHTML = '';
+
+            try {
+                // 실제 Vercel /api/plan 경로로 요청을 보내는 코드입니다.
+                // 현재는 해당 엔드포인트가 없으므로 catch 블록으로 넘어가 예시 데이터가 렌더링됩니다.
+                const response = await fetch('/api/plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('API를 아직 사용할 수 없습니다.');
+                }
+
+                const data = await response.json();
+                renderPlan(data.plan);
+
+            } catch (error) {
+                console.log('API 호출 실패, 예시 데이터를 보여줍니다:', error);
+                
+                // 자연스러운 로딩 연출을 위해 1.5초 지연
+                setTimeout(() => {
+                    const mockData = generateMockPlan(formData);
+                    renderPlan(mockData);
+                    setLoadingState(false);
+                }, 1500);
+                return; // setTimeout 내부에서 처리되므로 여기서 종료
+            }
+
+            setLoadingState(false);
+        });
+
+        // 다시 짜기 버튼
+        resetBtn.addEventListener('click', () => {
+            resultContainer.classList.add('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
+        });
+
+        function setLoadingState(isLoading) {
+            if (isLoading) {
+                btnText.textContent = '일정을 짜고 있어요...';
+                btnLoader.classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-80', 'cursor-not-allowed');
+            } else {
+                btnText.textContent = '일정 생성하기';
+                btnLoader.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+            }
+        }
+
+        // 받아온 일정 데이터를 화면에 카드 형태로 렌더링하는 함수
+        function renderPlan(dailyPlans) {
+            planCards.innerHTML = '';
+            
+            dailyPlans.forEach((dayPlan, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-white border border-gray-100 p-5 rounded-2xl shadow-sm fade-in';
+                card.style.animationDelay = `${index * 0.1}s`;
+                
+                // 카드 헤더 (N일차)
+                let activitiesHtml = dayPlan.activities.map(activity => `
+                    <li class="relative pl-6 pb-4 last:pb-0">
+                        <div class="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-blue-500"></div>
+                        ${index !== dailyPlans.length - 1 || activity !== dayPlan.activities[dayPlan.activities.length -1] ? 
+                          '<div class="absolute left-1 top-3.5 bottom-0 w-px bg-gray-200"></div>' : ''}
+                        <div class="text-sm font-bold text-blue-600 mb-0.5">${activity.time}</div>
+                        <div class="text-gray-700 text-sm leading-relaxed">${activity.description}</div>
+                    </li>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 mb-4 border-b border-gray-50 pb-3">
+                        <div class="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-lg text-sm">Day ${dayPlan.day}</div>
+                        <h3 class="font-bold text-gray-800">${dayPlan.title}</h3>
+                    </div>
+                    <ul class="ml-1 mt-2">
+                        ${activitiesHtml}
+                    </ul>
+                `;
+                planCards.appendChild(card);
+            });
+
+            resultContainer.classList.remove('hidden');
+            // 결과 영역으로 부드럽게 스크롤
+            setTimeout(() => {
+                resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        // API가 없을 때 보여줄 예시 데이터를 생성하는 함수
+        function generateMockPlan(data) {
+            const { destination, duration, companions, interests } = data;
+            const mockPlans = [];
+            
+            for (let i = 1; i <= duration; i++) {
+                let title = `${destination} 완벽 정복`;
+                let activities = [];
+                
+                if (i === 1) {
+                    title = `설레는 첫 만남, ${destination} 도착`;
+                    activities = [
+                        { time: "10:00 AM", description: `${destination} 공항/역 도착 및 짐 맡기기` },
+                        { time: "12:30 PM", description: `${interests ? interests.split(',')[0] : '유명 맛집'}에서 든든한 점심 식사` },
+                        { time: "03:00 PM", description: `숙소 체크인 및 휴식 (${companions}와/과 함께)` },
+                        { time: "06:00 PM", description: "현지 분위기를 느낄 수 있는 야시장 또는 번화가 구경" }
+                    ];
+                } else if (i === duration) {
+                    title = "아쉬움을 뒤로하고, 마무리 시간";
+                    activities = [
+                        { time: "10:00 AM", description: "여유로운 기상 후 브런치" },
+                        { time: "01:00 PM", description: "기념품 쇼핑 및 현지 카페에서 휴식" },
+                        { time: "04:00 PM", description: "공항/역으로 이동 및 귀가" }
+                    ];
+                } else {
+                    title = `본격적인 ${destination} 탐방`;
+                    activities = [
+                        { time: "09:30 AM", description: "랜드마크 관광 및 사진 촬영" },
+                        { time: "01:00 PM", description: "현지인 추천 숨은 맛집 탐방" },
+                        { time: "03:00 PM", description: `${interests ? '원하는 ' + interests : '자유 시간 및 힐링'} 즐기기` },
+                        { time: "07:00 PM", description: "분위기 좋은 레스토랑에서 저녁 식사" }
+                    ];
+                }
+
+                mockPlans.push({
+                    day: i,
+                    title: title,
+                    activities: activities
+                });
+            }
+            
+            return mockPlans;
+        }
+    </script>
+</body>
+</html>
